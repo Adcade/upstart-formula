@@ -9,7 +9,7 @@
 {% endif -%}
 
 {% set classpath = ".:" ~ jar_file ~ ":" ~ classpath %}
-{% set java_opts = "-Xms " ~ xms ~ "-Xmx " ~ xmx ~ "-Djava.ext.dirs=lib" %}
+{% set java_opts = "-Xms " ~ xms ~ " -Xmx " ~ xmx ~ " -Djava.ext.dirs=lib" %}
 
 /etc/init/{{ name }}.conf:
   file.managed:
