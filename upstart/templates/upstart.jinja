@@ -3,8 +3,12 @@ start on (local-filesystems
     and net-device-up IFACE!=lo)
 stop on shutdown
 
+{% set respawn_timeout = 20 %}
+{% set respawn_attempts = 2 %}
+
+
 respawn
-respawn limit 15 5
+respawn limit {{ respawn_attempts }} {{ respawn_timeout }}
 oom never
 
 pre-start script
