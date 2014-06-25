@@ -1,15 +1,22 @@
-{% macro javaservice(name, main_class, classpath, jar_file, service_account="root", log_path="/var/log", java_opts={}) -%}
+{% macro javaservice(name, main_class, classpath, jar_file, service_account="root", log_path="/var/log", java_opts={}, running=false) -%}
 
-{% set xms = "256M" -%}
-{% set xmx = "1G" -%}
+{% set default_opts = {
+  "Xms": "256M",
+  "Xmx": "1G"
+} %}
 
-{% if java_opts -%}
-{% set xms  = java_opts.get("xms", xms) -%}
-{% set xmx  = java_opts.get("xmx", xmx) -%}
-{% endif -%}
+{% set java_opts_str = "" %}
+{% for k, v in java_opts.items() %}
+  {% set java_opts_str = java_opts_str ~ " -" ~ k ~ "=" ~ v  %}
+{% endfor %}
+{% for k, v in default_opts.items() %}
+  {% if k not in java_opts %}
+    {% set java_opts_str = java_opts_str ~ " -" ~ k ~ "=" ~ v %}
+  {% endif %}
+{% endfor %}
+
 
 {% set classpath = ".:" ~ jar_file ~ ":" ~ classpath %}
-{% set java_opts = "-Xms " ~ xms ~ " -Xmx " ~ xmx ~ " -Djava.ext.dirs=lib" %}
 
 /etc/init/{{ name }}.conf:
   file.managed:
@@ -22,11 +29,13 @@
         name:            {{ name }}
         log_file:        {{ log_path }}/{{ name }}-startup.log
         service_account: {{ service_account }}
-        exec:            "$(which java) -cp {{ classpath }} {{ main_class }} {{ java_opts }}"
+        exec:            "$(which java) {{ java_opts_str }} -cp {{ classpath }} {{ main_class }}"
 
+{% if running -%}
 {{ name }}:
   service.running:
     - watch:
       - file: /etc/init/{{ name }}.conf
+{% endif -%}
 
 {%- endmacro %}
